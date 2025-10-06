@@ -1,0 +1,28 @@
+-Cada vez q se cambia algo de algun servicio, hay q reiniciarlo-
+
+-Parte iscsi-
+tgtadm --lld iscsi --op show --mode target -> para ver si lo hago bien
+1) Configuracion target iscsi (discos)
+a)target asignando iqn y tid
+    En tid es un numero q yo quiera
+    tgtadm --lld iscsi --op new --mode target --tid 1 --target iqn.2025-10.net.cda.discos:prueba
+b) Lun dentro del target al /dev/sdf
+    tgtadm --lld iscsi --op new --mode logicalunit --tid 1 --lun 1 --backing-store /dev/sdf
+c) Control de acceso
+    -Restringir acceso al target
+    tgtadm --llm iscsi --op bind --mode target --tid 1 --initiator-address 192.168.100.22
+    tgtadm --llm iscsi --op bind --mode target --tid 1 --initiator-address 192.168.100.33
+    -Autenticacion
+    tgtadm --lld iscsi --op new --mode account --user cda --password cdapass
+2) Configuracion y uso de initiators (cliente1 y cliente2)
+a) Renombrar initiators
+    echo "InitiatorName="`iscsi-iname` > /etc/iscsi/initiatorname.iscsi
+b) Habilitar autenticacion con chap
+    nano /etc/iscsi/iscsid.conf, y descomentar las lineas node.session.auth.authmethod = CHAP / node.session.auth.username = cda / node.session.auth.password = cdapass
+c) Recargar el servicio
+    systemctl restart iscsid.service
+d) Descubrir los target
+    iscsiadm -m discovery -t sendtargets -p 192.168.100.11
+    iscsiadm -m node -> para ver lo que descubrio
+e) Conectar al target
+    iscsiadm -m node -T iqn.2025-10.net.cda.discos:prueba -p 192.168.100.11 --login
