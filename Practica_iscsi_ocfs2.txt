@@ -36,4 +36,30 @@ b) Crear un grupo de volúmenes LVM empleando como volumen físico el array RAID
 -> lvcreate -n UNO -L 50 VG_DATOS
    lvcreate -n DOS -L 50 VG_DATOS
    lvcreate -n COMPARTIDO -L 50 VG_DATOS
--> ni idea de como asignarle cada vol logico a cada usuario
+-> crear el target y asocias los lv
+   tgtadm --lld iscsi --op new --mode target --tid 2 --targetname iqn.2025-10.local.discos:storage
+   tgtadm --lld iscsi --op new --mode logicalunit --tid 2 --lun 1 --backing-store /dev/VG_DATOS/UNO
+   tgtadm --lld iscsi --op new --mode logicalunit --tid 2 --lun 2 --backing-store /dev/VG_DATOS/DOS
+   tgtadm --lld iscsi --op new --mode logicalunit --tid 2 --lun 3 --backing-store /dev/VG_DATOS/COMPARTIDO
+-> tema de acceso a cada user segun ip
+   tgtadm --lld iscsi --op bind --mode target --tid 2 --initiator-address 192.168.100.22
+   tgtadm --lld iscsi --op bind --mode target --tid 2 --initiator-address 192.168.100.33
+   tgtadm --lld iscsi --op bind --mode target --tid 2 --initiator-address ALL
+c) Configurar y conectar initiators de cliente1 y cliente2 (en sus respectivas mvs)
+iscsiadm -m discovery -t sendtargets -p 192.168.100.11
+iscsiadm -m node -T iqn.2025-10.local.discos:storage --login
+d) Formatear y montar (tmb se hace en las vm de los usuarios)
+-> cliente 1, uno
+mkfs.ext3 /dev/sdd
+mkdir -p /mnt/uno
+mount /dev/sdd /mnt/uno
+-> cliente 1, compartido
+mkfs -t ocfs2 /dev/sdf
+mkdir -p /mnt/compartido
+mount -t ocfs2 /dev/sdf /mnt/compartido
+
+IMPORTANTE ANTES DE ESTE PASO HAY Q HACER
+hay q hacer nano /etc/default/o2cb y poner el O2CB_ENABLED a true, y luego reiniciar el servicio
+sudo o2cb add-cluster CLUSTER_COMPARTIDO
+sudo o2cb add-node CLUSTER_COMPARTIDO cliente1 --ip <IP_CLIENTE1>
+sudo o2cb add-node CLUSTER_COMPARTIDO cliente2 --ip <IP_CLIENTE2>
