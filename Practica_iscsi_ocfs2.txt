@@ -51,16 +51,28 @@ b) Crear un grupo de volúmenes LVM empleando como volumen físico el array RAID
 
 c) Configurar y conectar initiators de cliente1 y cliente2 (en sus respectivas mvs)
 iscsiadm -m discovery -t sendtargets -p 192.168.100.11
-iscsiadm -m node -T iqn.2025-10.local.discos:storage --login
+iscsiadm -m node -T (IQNs EN CADA CASO) --login
 d) Formatear y montar (tmb se hace en las vm de los usuarios)
 o2cb add-cluster clustercda
 o2cb add-node clustercda cliente1 --ip 192.168.100.22
 o2cb add-node clustercda cliente2 --ip 192.168.100.33 
+Para ver q disco esta en cada uno -> ls -la /dev/disk/by-path | grep iscsi
 -> cliente 1, uno
-mkfs -t ext3 /dev/sdd
+mkfs -t ext3 /dev/sdc
 mkdir -p /mnt/uno
-mount /dev/sdd /mnt/uno
--> cliente 1, compartido
-mkfs -t ocfs2 /dev/sdf
+mount /dev/sdc /mnt/uno
+-> cliente1, compartido ###IMPORTANTE VERIFICAR SI OCFS2 ESTA ACTIVE (service ocfs2 status)
+mkfs -t ocfs2 /dev/sdd
 mkdir -p /mnt/compartido
-mount -t ocfs2 /dev/sdf /mnt/compartido
+mount -t ocfs2 /dev/sdd /mnt/compartido
+-> cliente2, dos (aunq en los 2 el disco tenga el mismo nombre, son diferentes)
+mkfs -t ext3 /dev/sdc
+mkdir -p /mnt/uno
+mount /dev/sdc /mnt/uno
+-> cliente2, compartido
+mkdir -p /mnt/compartido
+mount -t ocfs2 /dev/sdd /mnt/compartido
+d) Persistencia
+nano /etc/default/o2cb (ambos clientes)
+O2CB_ENABLED=true
+O2CB_BOOTCLUSTER=clustercda
