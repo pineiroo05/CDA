@@ -10,8 +10,8 @@ b) Lun dentro del target al /dev/sdf
     tgtadm --lld iscsi --op new --mode logicalunit --tid 1 --lun 1 --backing-store /dev/sdf
 c) Control de acceso
     -Restringir acceso al target
-    tgtadm --llm iscsi --op bind --mode target --tid 1 --initiator-address 192.168.100.22
-    tgtadm --llm iscsi --op bind --mode target --tid 1 --initiator-address 192.168.100.33
+    tgtadm --lld iscsi --op bind --mode target --tid 1 --initiator-address 192.168.100.22
+    tgtadm --lld iscsi --op bind --mode target --tid 1 --initiator-address 192.168.100.33
     -Autenticacion
     tgtadm --lld iscsi --op new --mode account --user cda --password cdapass
 2) Configuracion y uso de initiators (cliente1 y cliente2)
