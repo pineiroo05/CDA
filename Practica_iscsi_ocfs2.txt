@@ -26,3 +26,14 @@ d) Descubrir los target
     iscsiadm -m node -> para ver lo que descubrio
 e) Conectar al target
     iscsiadm -m node -T iqn.2025-10.net.cda.discos:prueba -p 192.168.100.11 --login
+
+-Parte iscsi+ocfs2 sobre raid-
+a) Crear raid 10 con varios discos
+mdadm --create /dev/md0 --level=10 --raid-devices=4 /dev/sdc /dev/sdd /dev/sde /dev/sdf
+b) Crear un grupo de volúmenes LVM empleando como volumen físico el array RAID-10 anterior y definir tres volúmenes lógicos con 50 MB de capacidad cada uno (con los nombres UNO, DOS, COMPARTIDO)
+-> pvcreate /dev/md0
+-> vgcreate VG_DATOS /dev/md0
+-> lvcreate -n UNO -L 50 VG_DATOS
+   lvcreate -n DOS -L 50 VG_DATOS
+   lvcreate -n COMPARTIDO -L 50 VG_DATOS
+-> ni idea de como asignarle cada vol logico a cada usuario
